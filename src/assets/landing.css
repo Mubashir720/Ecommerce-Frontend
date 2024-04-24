@@ -1,0 +1,214 @@
+/* Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat&display=swap");
+
+/* Colors */
+:root {
+  --bg: #ffffff;
+  --gray1: #333333;
+  --gray2: #4f4f4f;
+  --gray3: #828282;
+  --gray4: #e0e0e0;
+  --gray5: #f2f2f2;
+  --orange: #f2994a;
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Body */
+body {
+  font-family: "Montserrat", sans-serif;
+  background-color: var(--bg);
+  color: var(--gray1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Container */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Main content */
+.main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+/* Form section */
+.form-section {
+  width: 100%;
+  max-width: 400px;
+}
+
+.form-area {
+  margin-bottom: 1rem;
+}
+
+.form-area h2 {
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
+}
+
+.contact-info {
+  margin-bottom: 2rem;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--gray2);
+  margin-bottom: 0.5rem;
+}
+
+.input-area {
+  height: 2.7rem;
+  border: 1px solid var(--gray3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  max-width: 450px;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.input-area .material-icons {
+  padding: 0.5rem;
+  color: var(--gray3);
+}
+
+.input-area input,
+select {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: var(--gray3);
+  background-color: white;
+  padding: 0 0.5rem;
+  border-radius: 8px;
+}
+
+select {
+  height: 100%;
+}
+
+.btn-area {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+button {
+  border: none;
+  background-color: var(--orange);
+  color: white;
+  font-family: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: darken(var(--orange), 10%);
+}
+
+/* Cart section */
+.cart-section {
+  background-color: var(--gray4);
+  padding: 1rem;
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.item img {
+  width: 130px;
+  height: 130px;
+  border-radius: 10px;
+  object-fit: cover;
+  margin-right: 1rem;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 1rem;
+  color: var(--gray3);
+  margin-bottom: 0.5rem;
+}
+
+.price {
+  font-size: 1rem;
+  color: var(--orange);
+}
+
+.prev-price {
+  font-size: 0.8rem;
+  color: var(--gray3);
+  text-decoration: line-through;
+  margin-left: 0.5rem;
+}
+
+.add-reduce-item {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.num {
+  font-weight: 700;
+}
+
+.reduce,
+.add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background-color: #e0e0e0;
+  color: var(--gray3);
+  font-size: 1rem;
+  border-radius: 50%;
+  margin: 0 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.reduce:hover,
+.add:hover {
+  background-color: darken(#e0e0e0, 10%);
+}
+
+.shipping-total {
+  margin: 2rem 0;
+}
+
+.shipping-area,
+.total-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--gray3);
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
