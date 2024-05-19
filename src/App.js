@@ -19,12 +19,18 @@ import Category from "./pages/category";
 import Checkout from "./pages/checkout";
 import SuccessPage from "./pages/successPage";
 import FailurePage from "./pages/failurePage";
+import Review from "./components/review";
+import Tryon from "./pages/tryon";
+
+import { ToastContainer } from "react-toastify";
+import HomePage from "./pages/chatbot";
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/chatbot" element={<HomePage />} />
         <Route path="/product/:slug" element={<ProductDetails />} />
         <Route path="/about" element={<About />} />
 
@@ -35,7 +41,8 @@ function App() {
         <Route path="/categories" element={<Category />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/failure" element={<FailurePage />} />
-
+        <Route path="/product/:slug/try-on" element={<Tryon />} />
+        <Route path="/rev" element={<Review />} />
         <Route path="/category/men" element={<Men />} />
         <Route path="/category/women" element={<Women />} />
         <Route path="/shop" element={<Shop />} />
@@ -45,6 +52,7 @@ function App() {
         <Route path="/return-policy" element={<ReturnPolicy />} />
         <Route path="/terms-conditions" element={<TermsAndConditions />} />
       </Routes>
+      <ToastContainer />
     </Router>
   );
 }

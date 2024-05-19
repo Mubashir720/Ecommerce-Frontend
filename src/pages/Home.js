@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductById, getProducts } from "../features/product/productSlice";
+import { useNavigate } from "react-router-dom";
+import { BsRobot } from "react-icons/bs";
 import Header from "../components/Header";
 import Features from "../components/Features";
 import Footer from "../components/Footer";
@@ -27,7 +29,11 @@ const Home = () => {
   const dispatch = useDispatch();
   const products = useSelector((state) => state.product.products);
   const isLoading = useSelector((state) => state.product.isLoading);
+  const navigate = useNavigate();
 
+  const handleClick = () => {
+    navigate("/chatbot");
+  };
   useEffect(() => {
     dispatch(getProducts());
     // Example of fetching a product by ID
@@ -91,6 +97,21 @@ const Home = () => {
         rel="apple-touch-icon"
       />
       <Header />
+      <div className="App">
+        {/* Your ChatBot component and other content */}
+        <div
+          style={{
+            position: "fixed",
+            bottom: "20px",
+            right: "20px",
+            cursor: "pointer",
+            zIndex: 1000, // Ensure it is on top of other elements
+          }}
+          onClick={handleClick}
+        >
+          <BsRobot size={50} /> {/* Adjust the size as needed */}
+        </div>
+      </div>
       <section className="hero">
         <div className="w-layout-blockcontainer container w-container">
           <div className="hero-wrap">

@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { getCart, emptyCart } from "../features/usercart/userCartSlice";
-import { useNavigate } from "react-router-dom";
+import { searchProducts } from "../features/search/searchSlice";
+import { useNavigate, Link } from "react-router-dom";
 import logo from "../assets/logo.png";
 import logo1 from "../assets/64f6c3e966f2a16851ccaf7b_ic-login.svg";
-
+import SearchResult from "../pages/searchResult";
+import { MdSettingsVoice } from "react-icons/md";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
 const Header = () => {
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const user = useSelector((state) => state.auth.user);
+  const [query, setQuery] = useState("");
+  const searchResults = useSelector((state) => state.search.searchResults);
+  const products = useSelector((state) => state.product.products);
+  // State for search query
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -47,6 +56,41 @@ const Header = () => {
       throw new Error("Failed to logout.");
     }
   };
+
+  const {
+    transcript,
+    listening,
+    startListening,
+    stopListening,
+    browserSupportsSpeechRecognition,
+  } = useSpeechRecognition();
+  const toggleVoiceSearch = () => {
+    if (browserSupportsSpeechRecognition) {
+      if (listening) {
+        SpeechRecognition.stopListening();
+      } else {
+        SpeechRecognition.startListening();
+      }
+    } else {
+      console.error("Speech recognition is not supported in this browser.");
+    }
+  };
+
+  useEffect(() => {
+    if (transcript !== "") {
+      setQuery(transcript);
+      console.log("trasncript", transcript);
+    }
+  }, [transcript]);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (query.trim() !== "") {
+      dispatch(searchProducts(query.trim()));
+
+      // Redirect to search results page or handle results display here
+    }
+  };
+
   return (
     <div className="header">
       <div
@@ -99,7 +143,7 @@ const Header = () => {
               </nav>
             </div>
             <div className="nav-right">
-              <form action="search" className="search-bar w-form">
+              <form onSubmit={handleSubmit} className="search-bar w-form">
                 <input
                   className="search-input w-input"
                   maxLength={256}
@@ -108,13 +152,97 @@ const Header = () => {
                   type="search"
                   id="search"
                   required
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
                 />
                 <input
                   type="submit"
                   className="search-btn w-button"
-                  defaultValue=""
+                  value="Search"
                 />
               </form>
+              <MdSettingsVoice onClick={toggleVoiceSearch} />
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  width: "100%",
+                  backgroundColor: "white",
+                  display: "flex",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  boxShadow: "0px 0px 8px #ddd",
+                  borderRadius: "10px",
+                  maxHeight: "300px",
+                  overflowY: "auto",
+                  zIndex: 1000, // Ensure the search results appear above other content
+                }}
+                className="results-list"
+              >
+                {searchResults.map((result, id) => {
+                  const product = products.find((p) => p._id === result._id); // Assuming there's an 'id' property in search results
+                  if (!product) return null; // Skip if product not found
+
+                  return (
+                    <Link
+                      to={`/product/${product.slug}`} // Replace 'product' with your actual product details route
+                      key={id}
+                      className="search-item"
+                      style={{ marginBottom: "20px", marginRight: "20px" }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <img
+                          src={
+                            product.images && product.images.length > 0
+                              ? product.images[0].url
+                              : ""
+                          }
+                          sizes="(max-width: 479px) 92vw, (max-width: 767px) 95vw, 43vw"
+                          srcSet={`${
+                            product.images && product.images.length > 0
+                              ? product.images[0].url
+                              : ""
+                          } 618w`}
+                          alt={product.title}
+                          style={{
+                            width: "60px",
+                            height: "auto",
+                            marginRight: "20px",
+                          }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <h3
+                            style={{
+                              marginBottom: "auto",
+                              fontWeight: "bold",
+                              fontSize: "20px",
+                            }}
+                          >
+                            {product.title}
+                          </h3>
+                          <p
+                            style={{
+                              marginBottom: "5px",
+                              flexDirection: "column",
+                            }}
+                          >
+                            Price: {product.price}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              {/* Search result */}
+
               <div>
                 <div style={{ position: "relative", display: "inline-block" }}>
                   <a
@@ -301,7 +429,6 @@ const Header = () => {
                   <img src={logo1} loading="lazy" alt="Login" />
                 </a>
               )}
-
               <div className="menu-button w-nav-button">
                 <div className="menu-icon">
                   <div className="menu-line" />

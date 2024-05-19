@@ -239,6 +239,7 @@ const Checkout = () => {
                   </label>
                   <button
                     type="button"
+                    className="w-commerce-commerceaddtocartbutton fill-btn"
                     onClick={makePayment}
                     style={{
                       marginTop: "20px",
@@ -258,6 +259,7 @@ const Checkout = () => {
             <div className="btn-area" style={{ marginTop: "20px" }}>
               <button
                 type="submit"
+                className="w-commerce-commerceaddtocartbutton fill-btn"
                 style={{
                   marginTop: "20px",
                   padding: "5px 10px",

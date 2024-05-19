@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { analyzeSentiment } from "../features/sentiment/sentimentSlice";
 import {
   getProductBySlug,
   getProducts,
@@ -8,18 +9,55 @@ import { addToCart } from "../features/usercart/userCartSlice";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useParams } from "react-router-dom";
-
+import { FaLocationArrow } from "react-icons/fa";
+import { LiaComment } from "react-icons/lia";
+import { getComments, postReview } from "../features/review/reviewSlice";
+import Chart from "chart.js/auto";
+import { recommend } from "../features/recommend/recommendSlice";
 const ProductDetails = () => {
   const dispatch = useDispatch();
   const product = useSelector((state) => state.product.product);
   const products = useSelector((state) => state.product.products);
   const isLoading = useSelector((state) => state.product.isLoading);
+  const sentimentData = useSelector(
+    (state) => state.sentiment.sentimentDataArray
+  );
   const { slug } = useParams();
+  const [commentInput, setCommentInput] = useState("");
+  const chartRef = useRef(null);
+  const [showChart, setShowChart] = useState(false);
+  const chartInstance = useRef(null);
+
+  const handleViewSentiment = () => {
+    dispatch(analyzeSentiment(product.slug));
+    setShowChart(!showChart); // Toggle chart visibility
+  };
+
+  const comments = useSelector((state) => state.review.comments.comments); // Get comments from the Redux store
+  const [showComments, setShowComments] = useState(false); // State to control comment visibility
+
+  const handleShowComments = () => {
+    if (!showComments && product) {
+      dispatch(getComments(product.slug));
+      setShowComments(true);
+    } else if (showComments) {
+      setShowComments(false);
+    }
+  };
+  const handlePostReview = () => {
+    // Call the postReview action with product ID and comment input
+    dispatch(postReview({ productId: product._id, comment: commentInput }));
+    // Clear the comment input after posting
+
+    setCommentInput("");
+  };
   const [quantity, setQuantity] = useState(1);
   useEffect(() => {
     dispatch(getProducts());
     dispatch(getProductBySlug(slug));
+    dispatch(recommend(slug));
   }, [dispatch, slug]);
+  const recommendations = useSelector((state) => state.recommend.recommend);
 
   const handleAddToCart = () => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -36,6 +74,53 @@ const ProductDetails = () => {
     );
     window.location.reload();
   };
+  useEffect(() => {
+    if (showChart && chartRef.current && sentimentData) {
+      // Destroy previous chart instance if exists
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+      }
+
+      const ctx = chartRef.current.getContext("2d");
+      const labels = ["Positive", "Neutral", "Negative"];
+      const data = [
+        sentimentData.positive,
+        sentimentData.neutral,
+        sentimentData.negative,
+      ];
+
+      chartInstance.current = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Sentiment Scores",
+              data,
+              backgroundColor: [
+                "rgba(75, 192, 192, 0.2)", // Positive
+                "rgba(255, 206, 86, 0.2)", // Neutral
+                "rgba(255, 99, 132, 0.2)", // Negative
+              ],
+              borderColor: [
+                "rgba(75, 192, 192, 1)",
+                "rgba(255, 206, 86, 1)",
+                "rgba(255, 99, 132, 1)",
+              ],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+  }, [sentimentData, showChart]);
 
   return (
     <div>
@@ -88,6 +173,7 @@ const ProductDetails = () => {
         rel="apple-touch-icon"
       />
       <Header />
+
       <div className="page-wrapper">
         {isLoading ? (
           <p>Loading...</p>
@@ -113,10 +199,7 @@ const ProductDetails = () => {
                     className="product-main-image"
                   />
                 </div>
-                <a
-                  href="#"
-                  className="product-plus w-inline-block w-lightbox"
-                ></a>
+
                 <div className="product-right">
                   <div className="product-details">
                     <h1 className="product-title">{product.title}</h1>
@@ -195,12 +278,138 @@ const ProductDetails = () => {
                       </div>
                     </div>
                     <div className="ai-list">
-                      <a href="return-policy">
+                      <a href="/return-policy">
                         Free delivery &amp; Returns policies
                       </a>
                     </div>
+                    <br />
+                    <button
+                      type="button"
+                      className="w-commerce-commerceaddtocartbutton fill-btn"
+                      onClick={() => {
+                        window.location.href = `/product/${product.slug}/try-on`; // Redirect to the "try-on" page
+                      }}
+                    >
+                      Try on
+                    </button>
+                    <br />
+                    <br />
+                    <br />
+                    <div
+                      style={{
+                        fontSize: "3rem",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="w-commerce-commerceaddtocartbutton fill-btn"
+                        style={{
+                          marginLeft: "auto",
+                          fontSize: "20px",
+                        }} // Adjust styles as needed
+                        onClick={handleViewSentiment}
+                      >
+                        {showChart
+                          ? "Hide Sentiment Chart"
+                          : "View Sentiment Chart"}
+                      </button>
+                      {showChart && <canvas ref={chartRef} />}
+                    </div>
+                    <div>
+                      {/* Your existing JSX code */}
+                      <div style={{ fontSize: "3rem" }}>
+                        <LiaComment onClick={handleShowComments} />
+                      </div>
+
+                      {showComments && (
+                        <div
+                          className="container"
+                          style={{
+                            maxWidth: "600px",
+                            margin: "0 auto",
+                            padding: "20px",
+                            border: "1px solid #ddd",
+                            borderRadius: "5px",
+                            backgroundColor: "#f5f5f5",
+                          }}
+                        >
+                          <h2 style={{ fontWeight: "bold" }}>Comments</h2>
+                          <div
+                            className="comment"
+                            style={{
+                              display: "flex",
+                              alignItems: "flex-start",
+                              position: "relative",
+                              paddingRight: "30px",
+                              marginBottom: "20px",
+                              border: "1px solid black",
+                              padding: "10px",
+                              borderRadius: "5px",
+                              height: "100px",
+                            }}
+                          >
+                            <div>
+                              <input
+                                className="time"
+                                style={{ height: "80px", width: "360px" }}
+                                type="text"
+                                placeholder="Enter your comment"
+                                value={commentInput}
+                                onChange={(e) =>
+                                  setCommentInput(e.target.value)
+                                }
+                              />
+                            </div>
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "20px",
+                                right: "20px",
+                                fontSize: "24px",
+                                cursor: "pointer",
+                              }}
+                              onClick={handlePostReview}
+                            >
+                              <FaLocationArrow />
+                            </div>
+                          </div>
+                          {comments && comments.length > 0 ? (
+                            comments.map((comment, index) => (
+                              <div
+                                key={index}
+                                className="comment"
+                                style={{
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  position: "relative",
+                                  paddingRight: "30px",
+                                  marginBottom: "20px",
+                                  border: "1px solid lightblue",
+                                  backgroundColor: "#bec0bf",
+                                  padding: "10px",
+                                  borderRadius: "5px",
+                                }}
+                              >
+                                <div>
+                                  <h3>{comment.userName}</h3>
+                                  <p className="time">{comment.comment} </p>
+                                  <p className="time">
+                                    PostedAt: {comment.createdAt}
+                                  </p>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p>No comments available.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>{" "}
                   </div>
                 </div>
+
                 <div className="p-none w-dyn-list w-dyn-items-repeater-ref">
                   <div
                     role="list"
@@ -317,75 +526,71 @@ const ProductDetails = () => {
         )}
         <section className="similar-products">
           <div className="w-layout-blockcontainer container w-container">
-            <h2 className="section-title">Similar Products</h2>
+            <h2 className="section-title">Recommended Products</h2>
             <div className="w-dyn-list">
               <div role="list" className="product-list w-dyn-items">
                 {isLoading ? (
                   <p>Loading...</p>
                 ) : (
-                  products.map((product) => {
+                  recommendations.map((product) => {
                     // Conditionally render product item for Accessories category
                     return (
-                      product.tags === "special" && (
-                        <div
-                          key={product.id}
-                          role="listitem"
-                          className="product-item w-dyn-item"
+                      <div
+                        key={product.id}
+                        role="listitem"
+                        className="product-item w-dyn-item"
+                      >
+                        <a
+                          data-w-id="45f1b884-06f0-859d-4670-185e07fb3887"
+                          href={`/product/${product.slug}`}
+                          className="product-link w-inline-block"
                         >
-                          <a
-                            data-w-id="45f1b884-06f0-859d-4670-185e07fb3887"
-                            href={`product/${product.slug}`}
-                            className="product-link w-inline-block"
-                          >
-                            <div className="product-img">
-                              <img
-                                alt={product.title}
-                                loading="lazy"
-                                style={{
-                                  WebkitTransform:
-                                    "translate3d(0, 0, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)",
-                                  MozTransform:
-                                    "translate3d(0, 0, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)",
-                                  msTransform:
-                                    "translate3d(0, 0, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)",
-                                  transform:
-                                    "translate3d(0, 0, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)",
-                                }}
-                                data-wf-sku-bindings="%5B%7B%22from%22%3A%22f_main_image_4dr%22%2C%22to%22%3A%22src%22%7D%5D"
-                                src={
-                                  product.images && product.images.length > 0
-                                    ? product.images[0].url
-                                    : ""
-                                }
-                                sizes="(max-width: 479px) 67vw, (max-width: 767px) 46vw, (max-width: 991px) 31vw, 22vw"
-                                srcSet={`${
-                                  product.images && product.images.length > 0
-                                    ? product.images[0].url
-                                    : ""
-                                } 618w`}
-                                className="product-image"
+                          <div className="product-img">
+                            <img
+                              alt={product.title}
+                              loading="lazy"
+                              style={{
+                                WebkitTransform:
+                                  "translate3d(0, 0, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)",
+                                MozTransform:
+                                  "translate3d(0, 0, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)",
+                                msTransform:
+                                  "translate3d(0, 0, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)",
+                                transform:
+                                  "translate3d(0, 0, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)",
+                              }}
+                              data-wf-sku-bindings="%5B%7B%22from%22%3A%22f_main_image_4dr%22%2C%22to%22%3A%22src%22%7D%5D"
+                              src={
+                                product.images && product.images.length > 0
+                                  ? product.images[0].url
+                                  : ""
+                              }
+                              sizes="(max-width: 479px) 67vw, (max-width: 767px) 46vw, (max-width: 991px) 31vw, 22vw"
+                              srcSet={`${
+                                product.images && product.images.length > 0
+                                  ? product.images[0].url
+                                  : ""
+                              } 618w`}
+                              className="product-image"
+                            />
+                          </div>
+                          <div className="product-info">
+                            <div className="product-name">{product.title}</div>
+                            <div className="price-wrap">
+                              <div
+                                data-wf-sku-bindings="%5B%7B%22from%22%3A%22f_price_%22%2C%22to%22%3A%22innerHTML%22%7D%5D"
+                                className="price"
+                              >
+                                {product.price} PKR
+                              </div>
+                              <div
+                                data-wf-sku-bindings="%5B%7B%22from%22%3A%22f_compare_at_price_7dr10dr%22%2C%22to%22%3A%22innerHTML%22%7D%5D"
+                                className="old-price w-dyn-bind-empty"
                               />
                             </div>
-                            <div className="product-info">
-                              <div className="product-name">
-                                {product.title}
-                              </div>
-                              <div className="price-wrap">
-                                <div
-                                  data-wf-sku-bindings="%5B%7B%22from%22%3A%22f_price_%22%2C%22to%22%3A%22innerHTML%22%7D%5D"
-                                  className="price"
-                                >
-                                  {product.price} PKR
-                                </div>
-                                <div
-                                  data-wf-sku-bindings="%5B%7B%22from%22%3A%22f_compare_at_price_7dr10dr%22%2C%22to%22%3A%22innerHTML%22%7D%5D"
-                                  className="old-price w-dyn-bind-empty"
-                                />
-                              </div>
-                            </div>
-                          </a>
-                        </div>
-                      )
+                          </div>
+                        </a>
+                      </div>
                     );
                   })
                 )}
